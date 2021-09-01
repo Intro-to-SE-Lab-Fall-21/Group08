@@ -7,7 +7,7 @@ Design  and  develop  an  email  client  that  will  have a  number  of differen
 
 - Name: Matthew Hawes github username: mwh273
 - Name: H github username:
-- Name: N github username:
+- Name: Nathaniel Childers : nac294
 
 ### Languages and Techniques:
 TBD
