@@ -18,4 +18,7 @@ Design  and  develop  an  email  client  that  will  have a  number  of differen
 - Nathaniel Childers ([nac294](https://github.com/nac294))
 
 ## Languages and Techniques:
+Python
 TBD
+
+
