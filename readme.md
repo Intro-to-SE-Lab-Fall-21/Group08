@@ -19,6 +19,3 @@ Design  and  develop  an  email  client  that  will  have a  number  of differen
 
 ## Languages and Techniques:
 Python
-TBD
-
-
