@@ -17,5 +17,6 @@ Design and develop an email client that will have a number of different function
 - Henry Nhan ([shadowhen89](https://github.com/shadowhen89))
 - Nathaniel Childers ([nac294](https://github.com/nac294))
 
-## Languages and Techniques:
-Python
+## Language and Techniques:
+- The team has decided to use Python for our Programming Language.
+- TBD on Techniques
