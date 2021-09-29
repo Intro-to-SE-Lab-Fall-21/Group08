@@ -3,6 +3,9 @@
 {% block content %}
 <!-- TODO: Add nice layout for the login page -->
 <h1>Login</h1>
+{% if error %}
+<p><strong>Error: </strong>{{ error }}</p>
+{% endif %}
 <form action="#" method="post">
   <!-- Even though the input check for "valid email address", 
     the email address needs to be validated on the server side -->
