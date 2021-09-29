@@ -43,6 +43,23 @@ def login():
     return render_template("login.html", error=error)
 
 
+@app.route("/inbox/", methods=["POST", "GET"])
+def inbox():
+    if request.method == "POST":
+        pass
+    return render_template("inbox.html")
+
+
+@app.route("/compose/", methods=["POST", "GET"])
+def composition():
+    if request.method == "POST":
+        receiver = request.form["receiver"]
+        subject = request.form["subject"]
+        bodytext = request.form["emailbody"]
+
+    return render_template("composition.html")
+
+
 @app.route("/logout/")
 def logout():
     if "user" in session:
