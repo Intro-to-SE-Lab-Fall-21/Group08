@@ -29,6 +29,9 @@ def login():
             inbox = imaplib.IMAP4_SSL("imap.gmail.com")
             inbox.login(email, password)
             inbox.logout()
+
+            # Store user's email and password after successful authenication
+            session["user"] = [email, password]
         except EmailNotValidError as e:
             error = str(e)
         except imaplib.IMAP4.error as e:
@@ -38,6 +41,14 @@ def login():
             inbox.logout()
 
     return render_template("login.html", error=error)
+
+
+@app.route("/logout/")
+def logout():
+    if "user" in session:
+        session.pop("user")
+    return redirect(url_for("home"))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
