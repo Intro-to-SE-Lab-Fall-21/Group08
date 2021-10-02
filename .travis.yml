@@ -4,4 +4,4 @@ python:
 install:
   - pip install -r requirements.txt
 script:
-  - echo Don't have any "actual" tests yet
+  - echo No actual tests yet
