@@ -74,6 +74,7 @@ def composition():
         bodytext = request.form["emailbody"]
 
         sendmessage(receiver, session["user"][0], session["user"][1], bodytext, subject)
+        return redirect(url_for("inbox"))
 
     return render_template("composition.html")
 
