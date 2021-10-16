@@ -3,8 +3,9 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from flask import Flask, request, redirect, render_template, url_for, session
+from flask import Flask, request, redirect, render_template, url_for, jsonify, session
 from email_validator import EmailNotValidError, validate_email
+from mailparser import parse_from_bytes
 
 app = Flask(__name__)
 app.secret_key = "REPLACE THIS SECRET KEY"
@@ -53,15 +54,101 @@ def login():
     return render_template("login.html", error=error)
 
 
-@app.route("/inbox/", methods=["POST", "GET"])
-def inbox():
+@app.route("/inbox/", defaults={"number": 0})
+@app.route("/inbox/<int:number>", methods=["POST", "GET"])
+def inbox(number):
     if "user" not in session:
         return redirect(url_for("home"))
 
     if request.method == "POST":
         pass
-    return render_template("inbox.html")
+    
+    # Open connection with the IMAP server
+    inbox = imaplib.IMAP4_SSL("imap.gmail.com")
+    
+    # Login using the user's login information
+    user = session["user"]
+    inbox.login(user[0], user[1])
+    
+    # Get the message count
+    _, response = inbox.select()
+    uid_number = int(response[0].decode()) - (5 * number)
 
+    msgs = []
+    uids_str = []
+    
+    # Fetch last five messages until five messages are fetched
+    # or message count goes to zero
+    for i in range(uid_number, max(0, uid_number - 5), -1):
+        _, raw_data = inbox.fetch(str(i), "(RFC822)")
+        msg = parse_from_bytes(raw_data[0][1])
+        msgs.append(msg)
+        uids_str.append(i)
+    inbox.close()
+    inbox.logout()
+
+    return render_template("inbox.html", messages=msgs, uids=uids_str, number=number, uid_number=uid_number)
+
+
+@app.route("/inbox/<int:inbox_page>?<int:uid>")
+def inbox_message(uid, inbox_page):
+    # Redirect user to login if user information does not exist
+    if "user" not in session:
+        return redirect(url_for("login"))
+    if int(uid) <= 0:
+        return redirect(url_for("inbox"))
+
+    user = session["user"]
+    msg = fetch_mail(user[0], user[1], "imap.gmail.com", uid)
+
+    if msg:
+        msg_subject = msg.subject
+        msg_from = msg.from_[0]
+        msg_to = msg.to[0]
+        msg_date = msg.date
+        msg_text = msg.text_plain
+
+        if msg_from[0]:
+            msg_from = msg_from[0]
+        else:
+            msg_from = msg_from[1]
+        if msg_to[0]:
+            msg_to = msg_to[0]
+        else:
+            msg_to = msg_to[1]
+
+        if len(msg_text) == 0:
+            msg_text = ""
+        else:
+            msg_text = msg_text[0]
+
+        return render_template("message.html", 
+            subject=msg_subject, 
+            from_=msg_from, 
+            to=msg_to, 
+            date=msg_date, 
+            text=msg_text, 
+            inbox_page=inbox_page
+            )
+    return redirect(url_for("inbox"))
+
+
+def fetch_mail(username, password, host, uid):
+    inbox = imaplib.IMAP4_SSL(host)
+    inbox.login(username, password)
+    inbox.select("INBOX")
+    
+    # Fetch the raw mail data using the uid
+    _, raw_data = inbox.fetch(str(uid), '(RFC822)')
+
+    # Convert raw data into usable message and return message itself
+    if raw_data[0]:
+        msg = parse_from_bytes(raw_data[0][1])
+        return msg
+    
+    # Returns None if the message does not exist
+    return None
+    
 
 @app.route("/compose/", methods=["POST", "GET"])
 def composition():
