@@ -72,7 +72,8 @@ def inbox(number):
     
     # Get the message count
     _, response = inbox.select()
-    uid_number = int(response[0].decode()) - (5 * number)
+    latest_uid_number = int(response[0].decode())
+    uid_number = latest_uid_number - (5 * number)
 
     msgs = []
     uids_str = []
@@ -87,7 +88,13 @@ def inbox(number):
     inbox.close()
     inbox.logout()
 
-    return render_template("inbox.html", messages=msgs, uids=uids_str, number=number, uid_number=uid_number)
+    return render_template("inbox.html", 
+        messages=msgs, 
+        uids=uids_str, 
+        number=number, 
+        uid_number=uid_number, 
+        latest_uid_number=latest_uid_number
+        )
 
 
 @app.route("/inbox/<int:inbox_page>?<int:uid>")

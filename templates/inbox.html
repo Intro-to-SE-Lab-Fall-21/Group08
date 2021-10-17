@@ -23,11 +23,28 @@
 {% endfor %}
 
 <!-- See next or previous messages -->
-{% if number != 0 %}
-<a href="{{ url_for('inbox', number=number-1) }}">Previous</a>
-{% endif %}
+<footer>
+  {% if number != 0 %}
+  <a href="{{ url_for('inbox', number=0) }}">Newest</a>
+  <a href="{{ url_for('inbox', number=number-1) }}">Previous</a>
+  {% else %}
+  Latest
+  Previous
+  {% endif %}
 
-{% if uid_number - 5 > 0 %}
-<a href="{{ url_for('inbox', number=number+1)}}">Next</a>
-{% endif %}
+  {{ number + 1}}
+
+  {% if uid_number - 5 > 0 %}
+  <a href="{{ url_for('inbox', number=number+1)}}">Next</a>
+  {% else %}
+  Next
+  {% endif %}
+
+  {% if latest_uid_number // 5 - 1 != number %}
+  <a href="{{ url_for('inbox', number=latest_uid_number // 5 - 1) }}">Oldest</a>
+  {% else %}
+  Oldest
+  {% endif %}
+</footer>
+
 {% endblock %}
