@@ -214,6 +214,26 @@ def search():
     return render_template('search.html')
 
 
+def fetch_messages(uid: list | str, mailbox: imaplib.IMAP4):
+    if type(uid) is str:
+        uid = [uid]
+    uid = [i.decode() for i in uid]
+
+    html_text = """"""
+    for i in range(len(uid)):
+        _, raw_data = mailbox.fetch(uid[i], "(BODY.PEEK[HEADER.FIELDS (SUBJECT FROM DATE)])")
+        msg = parse_from_bytes(raw_data[0][1])
+
+        from_ = msg.from_[0][0] if msg.from_[0][0] else msg.from_[0][1]
+        html_text += """<article>
+        <h2><a id="{uid}" href="#">{subject}</a></h2>
+        <p>{date}</p>
+        <p>{from_}</p>
+        <p id="{uid}-text"></p>
+        </article>""".format(uid=uid[i], subject=msg.subject, date=msg.date, from_=from_)
+    return uid, html_text
+
+
 @app.route("/inbox/search/process", methods=["POST"])
 def search_process():
     user_query = request.form["query"]
@@ -237,24 +257,9 @@ def search_process():
         session["search-index"] = index = 0
         session["search-uid"] = data
 
-        # HTML text
-        html_text = """"""
-
-        # Adds to html text with five messages
-        for i in range(-1, max(-6, -len(data) - 1), -1):
-            uid = data[i].decode()
-            _, raw_data = mailbox.fetch(uid, "(BODY.PEEK[HEADER.FIELDS (SUBJECT FROM DATE)])")
-            msg = parse_from_bytes(raw_data[0][1])
-
-            link = url_for("inbox_message", uid=uid, inbox_page=0)
-
-            from_ = msg.from_[0][0] if msg.from_[0][0] else msg.from_[0][1]
-            
-            html_text += """<article>
-            <h2><a href="{}">{}</a></h2>
-            <p>{}</p>
-            <p>{}</p>
-            </article>""".format(link, msg.subject, msg.date, from_)
+        # Fetch messages
+        uid_data = data[-1-5*index:-6-5*index:-1]
+        used_uids, html_text = fetch_messages(uid_data, mailbox)
 
         # Close the connection
         mailbox.close()
@@ -262,7 +267,7 @@ def search_process():
 
         can_next = not (abs(-1 - 5 * (index + 1)) > len(data))
         
-        return jsonify({"htmlText": html_text, "canNext": can_next})
+        return jsonify({"htmlText": html_text, "canNext": can_next, "uids": used_uids})
 
     return jsonify({"error": "Missing data!"})
 
@@ -281,23 +286,8 @@ def search_next():
     mailbox.login(session["user"][0], session["user"][1])
     mailbox.select()
 
-    html_text = """"""
-
-    # Adds to html text with next five messages
-    for i in range(-1 - (5 * index), max(-6 - (5 * index), -len(uids) - 1), -1):
-        uid = uids[i].decode()
-        _, raw_data = mailbox.fetch(uid, "(BODY.PEEK[HEADER.FIELDS (SUBJECT FROM DATE)])")
-        msg = parse_from_bytes(raw_data[0][1])
-
-        link = url_for("inbox_message", uid=uid, inbox_page=0)
-
-        from_ = msg.from_[0][0] if msg.from_[0][0] else msg.from_[0][1]
-        
-        html_text += """<article>
-        <h2><a href="{}">{}</a></h2>
-        <p>{}</p>
-        <p>{}</p>
-        </article>""".format(link, msg.subject, msg.date, from_)
+    uids = uids[-1-5*index:-6-5*index:-1]
+    used_uids, html_text = fetch_messages(uids, mailbox) 
 
     # Close the connection
     mailbox.close()
@@ -309,8 +299,25 @@ def search_next():
     can_next = not (abs(-1 - 5 * (index + 1)) > len(uids))
     can_prev = -1 - 5 * (index - 1) <= -1
 
-    return jsonify({"htmlText": html_text, "canNext": can_next, "canPrev": can_prev})
+    return jsonify({"htmlText": html_text, "canNext": can_next, "canPrev": can_prev, "uids": used_uids})
+
+
+@app.route("/inbox/search/show", methods=["POST"])
+def search_show_text():
+    # Fetch text using the message id
+    mailbox = imaplib.IMAP4_SSL("imap.gmail.com")
+    mailbox.login(session["user"][0], session["user"][1])
+    mailbox.select()
+    uid = request.form["uid"]
+    _, data = mailbox.fetch(uid, "(RFC822)")
+    mailbox.close()
+    mailbox.logout()
     
+    # Parse into a message
+    msg = parse_from_bytes(data[0][1])
+
+    return jsonify({"text": msg.text_html})
+
 
 @app.route("/logout/")
 def logout():
