@@ -81,7 +81,7 @@ def inbox(number):
     # Fetch last five messages until five messages are fetched
     # or message count goes to zero
     for i in range(uid_number, max(0, uid_number - 5), -1):
-        _, raw_data = inbox.fetch(str(i), "(RFC822)")
+        _, raw_data = inbox.fetch(str(i), "(BODY.PEEK[HEADER.FIELDS (SUBJECT FROM DATE)])")
         msg = parse_from_bytes(raw_data[0][1])
         msgs.append(msg)
         uids_str.append(i)
@@ -243,7 +243,7 @@ def search_process():
         # Adds to html text with five messages
         for i in range(-1, max(-6, -len(data) - 1), -1):
             uid = data[i].decode()
-            _, raw_data = mailbox.fetch(uid, "(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])")
+            _, raw_data = mailbox.fetch(uid, "(BODY.PEEK[HEADER.FIELDS (SUBJECT FROM DATE)])")
             msg = parse_from_bytes(raw_data[0][1])
 
             link = url_for("inbox_message", uid=uid, inbox_page=0)
@@ -286,7 +286,7 @@ def search_next():
     # Adds to html text with next five messages
     for i in range(-1 - (5 * index), max(-6 - (5 * index), -len(uids) - 1), -1):
         uid = uids[i].decode()
-        _, raw_data = mailbox.fetch(uid, "(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])")
+        _, raw_data = mailbox.fetch(uid, "(BODY.PEEK[HEADER.FIELDS (SUBJECT FROM DATE)])")
         msg = parse_from_bytes(raw_data[0][1])
 
         link = url_for("inbox_message", uid=uid, inbox_page=0)
