@@ -12,14 +12,21 @@ $(document).ready(function () {
                 $("main").hide();
                 $("#errorAlert").text(data.error).show();
             } else {
-                $("main").html(data.htmlText);
+                $("main").html(data.htmlText).show();
                 $("#errorAlert").hide();
                 $("#next").text("Next").show();
             }
             $("#loadingAlert").hide();
             $("#prev").hide();
+
+            if (data.canNext) {
+                $("#next").text("Next").show();
+            } else {
+                $("#next").hide();
+            }
         });
 
+        $("#errorAlert").hide();
         $("#loadingAlert").text("...loading").show();
         event.preventDefault();
     });
@@ -37,7 +44,7 @@ $(document).ready(function () {
                 $("main").hide();
                 $("#errorAlert").text(data.error).show();
             } else {
-                $("main").html(data.htmlText);
+                $("main").html(data.htmlText).show();
                 $("#errorAlert").hide();
             }
             $("#loadingAlert").hide();
@@ -65,7 +72,7 @@ $(document).ready(function () {
                 $("main").hide();
                 $("#errorAlert").text(data.error).show();
             } else {
-                $("main").html(data.htmlText);
+                $("main").html(data.htmlText).show();
                 $("#errorAlert").hide();
             }
             $("#loadingAlert").hide();

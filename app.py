@@ -231,10 +231,10 @@ def search_process():
 
         # Returns "No messages found" if the query returns no messages
         if len(data) == 0:
-            return jsonify({"htmlText": "<p>No messages found</p>"})
+            return jsonify({"error": "No messages found"})
 
         # Store session info about search
-        session["search-index"] = 0
+        session["search-index"] = index = 0
         session["search-uid"] = data
 
         # HTML text
@@ -259,10 +259,13 @@ def search_process():
         # Close the connection
         mailbox.close()
         mailbox.logout()
+
+        can_next = not (abs(-1 - 5 * (index + 1)) > len(data))
         
-        return jsonify({"htmlText": html_text})
+        return jsonify({"htmlText": html_text, "canNext": can_next})
 
     return jsonify({"error": "Missing data!"})
+
 
 @app.route("/inbox/search/next", methods=["POST"])
 def search_next():
@@ -303,7 +306,7 @@ def search_next():
     # Update the index
     session["search-index"] = index
 
-    can_next = not (abs(-1 - 5 * (index + 1)) > len(uid))
+    can_next = not (abs(-1 - 5 * (index + 1)) > len(uids))
     can_prev = -1 - 5 * (index - 1) <= -1
 
     return jsonify({"htmlText": html_text, "canNext": can_next, "canPrev": can_prev})
