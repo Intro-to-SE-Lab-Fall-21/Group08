@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block head %}
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+{% endblock %}
+{% block title %}Search Page{% endblock %}
+{% block content %}
+<a href="{{ url_for('inbox') }}">Go back to inbox</a>
+<form>
+  <input type="text" id="query" required>
+  <button type="submit">Submit</button>
+</form>
+
+<p id="loadingAlert"></p>
+<p id="errorAlert"></p>
+<main>
+
+</main>
+<a id="prev" href="#"></a>
+<a id="next" href="#"></a>
+{% endblock %}
