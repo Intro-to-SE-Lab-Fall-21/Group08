@@ -58,51 +58,66 @@ def login():
     return render_template("login.html", error=error)
 
 
-@app.route("/inbox/", defaults={"number": 0})
-@app.route("/inbox/<int:number>", methods=["POST", "GET"])
-def inbox(number):
+@app.route("/inbox/")
+def inbox():
     if "user" not in session:
         return redirect(url_for("home"))
 
-    if request.method == "POST":
-        pass
+    session["messagesUids"] = None
+
+    return render_template("inbox.html")
+
+
+@app.route("/process/inbox/fetch", methods=["POST"])
+def process_inbox_fetch():
+    messageUids = session["messagesUids"]
     
-    # Open connection with the IMAP server
-    inbox = imaplib.IMAP4_SSL("imap.gmail.com")
-    
-    # Login using the user's login information
+    # Login using user credientials
+    imap = imaplib.IMAP4_SSL("imap.gmail.com")
     user = session["user"]
-    inbox.login(user[0], user[1])
-    
-    # Get the message count
-    _, response = inbox.select()
-    latest_uid_number = int(response[0].decode())
-    uid_number = latest_uid_number - (5 * number)
+    imap.login(user[0], user[1])
+    imap.select()
 
-    msgs = []
-    uids_str = []
+    # Fetch all Uids from the server if the messageUids is empty
+    if messageUids is None:
+        _, data = imap.search(None, "ALL")
+        data = data[0].decode().split()
+        data.reverse()
+        messageUids = data
     
-    # Fetch last five messages until five messages are fetched
-    # or message count goes to zero
-    for i in range(uid_number, max(0, uid_number - 5), -1):
-        _, raw_data = inbox.fetch(str(i), "(RFC822)")
+    index = 0
+    html_text = """"""
+    while index < 5 and messageUids:
+        index += 1
+        uid = messageUids.pop(0)
+        _, raw_data = imap.fetch(uid, "(BODY[HEADER.FIELDS (SUBJECT DATE FROM)])")
         msg = parse_from_bytes(raw_data[0][1])
-        msgs.append(msg)
-        uids_str.append(i)
-    inbox.close()
-    inbox.logout()
 
-    return render_template("inbox.html", 
-        messages=msgs, 
-        uids=uids_str, 
-        number=number, 
-        uid_number=uid_number, 
-        latest_uid_number=latest_uid_number
-        )
+        msg_subject = msg.subject
+        msg_date = msg.date
+        msg_from = msg.from_[0]
+
+        if msg_from[0]:
+            msg_from = msg_from[0]
+        else:
+            msg_from = msg_from[1]
+
+        html_text += """<article>
+            <h2><a href="{}">{}</a></h2> <!-- Subject -->
+            <p>{}</p> <!-- Date -->
+            <p>{}</p> <!-- From -->
+        </article>""".format(url_for("inbox_message", uid=uid), msg_subject, msg_date, msg_from)
+
+    imap.close()
+    imap.logout()
+
+    session["messagesUids"] = messageUids
+
+    return jsonify({"messagesDisplayed": 0, "text": html_text, "empty": len(messageUids) == 0})
 
 
-@app.route("/inbox/<int:inbox_page>?<int:uid>")
-def inbox_message(uid, inbox_page):
+@app.route("/inbox/<int:uid>/")
+def inbox_message(uid):
     # Redirect user to login if user information does not exist
     if "user" not in session:
         return redirect(url_for("login"))
@@ -138,8 +153,7 @@ def inbox_message(uid, inbox_page):
             from_=msg_from, 
             to=msg_to, 
             date=msg_date, 
-            text=msg_text, 
-            inbox_page=inbox_page
+            text=msg_text
             )
     return redirect(url_for("inbox"))
 
