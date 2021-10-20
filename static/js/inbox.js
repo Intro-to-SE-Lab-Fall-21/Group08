@@ -15,14 +15,14 @@ $(document).ready(function() {
 
         $("#loadMoreMessages").hide();
         $("#loadAlert").text("Loading messages...")
-    
+
         $.ajax({
             type: "POST",
             url: "/process/inbox/fetch"
         })
         .done(function (data) {
             $("main").append(data.text)
-    
+
             if (data.empty) {
                 $("#loadMoreMessages").hide();
             } else {

@@ -1,6 +1,6 @@
 $(document).ready(function () {
     $("main").hide();
-    
+
     $.ajax({
         data: {
             uid: $("h1").attr("uid")
