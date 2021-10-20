@@ -58,90 +58,125 @@ def login():
     return render_template("login.html", error=error)
 
 
-@app.route("/inbox/", defaults={"number": 0})
-@app.route("/inbox/<int:number>", methods=["POST", "GET"])
-def inbox(number):
+@app.route("/inbox/")
+def inbox():
     if "user" not in session:
         return redirect(url_for("home"))
 
-    if request.method == "POST":
-        pass
+    session["messagesUids"] = None
+
+    return render_template("inbox.html")
+
+
+@app.route("/process/inbox/fetch", methods=["POST"])
+def process_inbox_fetch():
+    messageUids = session["messagesUids"]
     
-    # Open connection with the IMAP server
-    inbox = imaplib.IMAP4_SSL("imap.gmail.com")
-    
-    # Login using the user's login information
+    # Login using user credientials
+    imap = imaplib.IMAP4_SSL("imap.gmail.com")
     user = session["user"]
-    inbox.login(user[0], user[1])
-    
-    # Get the message count
-    _, response = inbox.select()
-    latest_uid_number = int(response[0].decode())
-    uid_number = latest_uid_number - (5 * number)
+    imap.login(user[0], user[1])
+    imap.select()
 
-    msgs = []
-    uids_str = []
+    # Fetch all Uids from the server if the messageUids is empty
+    if messageUids is None:
+        _, data = imap.search(None, "ALL")
+        data = data[0].decode().split()
+        data.reverse()
+        messageUids = data
+        session["receivedUids"] = messageUids[:]
     
-    # Fetch last five messages until five messages are fetched
-    # or message count goes to zero
-    for i in range(uid_number, max(0, uid_number - 5), -1):
-        _, raw_data = inbox.fetch(str(i), "(RFC822)")
+    index = 0
+    html_text = """"""
+    while index < 5 and messageUids:
+        index += 1
+        uid = messageUids.pop(0)
+        _, raw_data = imap.fetch(uid, "(BODY.PEEK[HEADER.FIELDS (SUBJECT DATE FROM)])")
         msg = parse_from_bytes(raw_data[0][1])
-        msgs.append(msg)
-        uids_str.append(i)
-    inbox.close()
-    inbox.logout()
 
-    return render_template("inbox.html", 
-        messages=msgs, 
-        uids=uids_str, 
-        number=number, 
-        uid_number=uid_number, 
-        latest_uid_number=latest_uid_number
-        )
+        msg_subject = msg.subject
+        msg_date = msg.date
+        msg_from = msg.from_[0]
+
+        if msg_from[0]:
+            msg_from = msg_from[0]
+        else:
+            msg_from = msg_from[1]
+
+        html_text += """<article>
+            <h2><a href="{}">{}</a></h2> <!-- Subject -->
+            <p>{}</p> <!-- Date -->
+            <p>{}</p> <!-- From -->
+        </article>""".format(url_for("inbox_message", uid=uid), msg_subject, msg_date, msg_from)
+
+    imap.close()
+    imap.logout()
+
+    session["messagesUids"] = messageUids
+
+    return jsonify({"messagesDisplayed": 0, "text": html_text, "empty": len(messageUids) == 0})
 
 
-@app.route("/inbox/<int:inbox_page>?<int:uid>")
-def inbox_message(uid, inbox_page):
+@app.route("/process/inbox/search", methods=["POST"])
+def process_inbox_search():
+    search_query = request.form["search"]
+
+    # Login using user credientials
+    imap = imaplib.IMAP4_SSL("imap.gmail.com")
+    user = session["user"]
+    imap.login(user[0], user[1])
+    imap.select()
+
+    # Strip search query any whitespaces beginning before and ending after content
+    search_query = search_query.strip()
+
+    if search_query:
+        _, data = imap.search(None, "SUBJECT \"%s\"" % search_query)
+    else:
+        _, data = imap.search(None, "ALL")
+    
+    imap.close()
+    imap.logout()
+    
+    # Decode into strings and setup from newest to oldest messages
+    data = data[0].decode().split()
+    data.reverse()
+
+    session["messagesUids"] = data
+    session["receivedUids"] = data[:]
+
+    return jsonify({"empty": len(data) == 0})
+
+
+@app.route("/inbox/<int:uid>/")
+def inbox_message(uid):
     # Redirect user to login if user information does not exist
     if "user" not in session:
         return redirect(url_for("login"))
     if int(uid) <= 0:
         return redirect(url_for("inbox"))
 
-    user = session["user"]
-    msg = fetch_mail(user[0], user[1], "imap.gmail.com", uid)
-
-    if msg:
-        msg_subject = msg.subject
-        msg_from = msg.from_[0]
-        msg_to = msg.to[0]
-        msg_date = msg.date
-        msg_text = msg.text_plain
-
-        if msg_from[0]:
-            msg_from = msg_from[0]
-        else:
-            msg_from = msg_from[1]
-        if msg_to[0]:
-            msg_to = msg_to[0]
-        else:
-            msg_to = msg_to[1]
-
-        if len(msg_text) == 0:
-            msg_text = ""
-        else:
-            msg_text = msg_text[0]
-
-        return render_template("message.html", 
-            subject=msg_subject, 
-            from_=msg_from, 
-            to=msg_to, 
-            date=msg_date, 
-            text=msg_text, 
-            inbox_page=inbox_page
-            )
+    if str(uid) in session["receivedUids"]:
+        user = session["user"]
+        subject = fetch_subject(user[0], user[1], "imap.gmail.com", uid)
+        return render_template("message.html", uid=uid, subject=subject)
     return redirect(url_for("inbox"))
+
+
+def fetch_subject(username, password, host, uid):
+    inbox = imaplib.IMAP4_SSL(host)
+    inbox.login(username, password)
+    inbox.select("INBOX")
+    
+    # Fetch the raw mail data using the uid
+    _, raw_data = inbox.fetch(str(uid), '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
+    inbox.close()
+    inbox.logout()
+
+    subject = raw_data[0][1].decode()
+    subject = subject.replace("\r\n", "").lstrip("Subject: ")
+
+    return subject
 
 
 def fetch_mail(username, password, host, uid):
@@ -152,6 +187,9 @@ def fetch_mail(username, password, host, uid):
     # Fetch the raw mail data using the uid
     _, raw_data = inbox.fetch(str(uid), '(RFC822)')
 
+    inbox.close()
+    inbox.logout()
+
     # Convert raw data into usable message and return message itself
     if raw_data[0]:
         msg = parse_from_bytes(raw_data[0][1])
@@ -159,7 +197,39 @@ def fetch_mail(username, password, host, uid):
     
     # Returns None if the message does not exist
     return None
-    
+
+
+def get_message_users(users):
+    temp = []
+    for user in users:
+        if user[0]:
+            temp.append("{} <{}>".format(user[0], user[1]))
+        else:
+            temp.append(user[1])
+    return ", ".join(temp)
+
+
+@app.route("/process/inbox/message", methods=["POST"])
+def process_inbox_message():
+    uid = request.form["uid"]
+    user = session["user"]
+
+    msg = fetch_mail(user[0], user[1], "imap.gmail.com", uid)
+
+    msg_to = get_message_users(msg.to)
+    msg_from = get_message_users(msg.from_)
+
+    plain_text = msg.text_plain
+    html_text = msg.text_html
+    text = ''
+
+    if html_text:
+        text = html_text[0]
+    elif plain_text:
+        text = plain_text[0]
+
+    return jsonify({"subject": msg.subject, "from": msg_from, "to": msg_to, "date": msg.date, "text": text})
+
 
 @app.route("/compose/", methods=["POST", "GET"])
 def composition():
@@ -261,106 +331,6 @@ def sendmessage(receiver, sender, password, bodytext, subject, files, attachment
 
     # Return true on success
     return True
-
-
-@app.route("/inbox/search/")
-def search():
-    return render_template('search.html')
-
-
-@app.route("/inbox/search/process", methods=["POST"])
-def search_process():
-    user_query = request.form["query"]
-    
-    if user_query:
-
-        # Open connection with IMAP server using the user login info
-        mailbox = imaplib.IMAP4_SSL("imap.gmail.com")
-        mailbox.login(session["user"][0], session["user"][1])
-        mailbox.select()
-
-        # Search on IMAP server with user query
-        _, data = mailbox.search(None, 'SUBJECT \"' + user_query + '\"')
-        data = data[0].split()
-
-        # Returns "No messages found" if the query returns no messages
-        if len(data) == 0:
-            return jsonify({"htmlText": "<p>No messages found</p>"})
-
-        # Store session info about search
-        session["search-index"] = 0
-        session["search-uid"] = data
-
-        # HTML text
-        html_text = """"""
-
-        # Adds to html text with five messages
-        for i in range(-1, max(-6, -len(data) - 1), -1):
-            uid = data[i].decode()
-            _, raw_data = mailbox.fetch(uid, "(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])")
-            msg = parse_from_bytes(raw_data[0][1])
-
-            link = url_for("inbox_message", uid=uid, inbox_page=0)
-
-            from_ = msg.from_[0][0] if msg.from_[0][0] else msg.from_[0][1]
-            
-            html_text += """<article>
-            <h2><a href="{}">{}</a></h2>
-            <p>{}</p>
-            <p>{}</p>
-            </article>""".format(link, msg.subject, msg.date, from_)
-
-        # Close the connection
-        mailbox.close()
-        mailbox.logout()
-        
-        return jsonify({"htmlText": html_text})
-
-    return jsonify({"error": "Missing data!"})
-
-@app.route("/inbox/search/next", methods=["POST"])
-def search_next():
-    if "search-index" not in session:
-        return jsonify({"error": "Cannot go next search!"})
-    
-    increment = int(request.form["value"])
-    index = session["search-index"] + increment
-    uids = session["search-uid"]
-
-    # Open connection with IMAP server using the user login info
-    mailbox = imaplib.IMAP4_SSL("imap.gmail.com")
-    mailbox.login(session["user"][0], session["user"][1])
-    mailbox.select()
-
-    html_text = """"""
-
-    # Adds to html text with next five messages
-    for i in range(-1 - (5 * index), max(-6 - (5 * index), -len(uids) - 1), -1):
-        uid = uids[i].decode()
-        _, raw_data = mailbox.fetch(uid, "(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])")
-        msg = parse_from_bytes(raw_data[0][1])
-
-        link = url_for("inbox_message", uid=uid, inbox_page=0)
-
-        from_ = msg.from_[0][0] if msg.from_[0][0] else msg.from_[0][1]
-        
-        html_text += """<article>
-        <h2><a href="{}">{}</a></h2>
-        <p>{}</p>
-        <p>{}</p>
-        </article>""".format(link, msg.subject, msg.date, from_)
-
-    # Close the connection
-    mailbox.close()
-    mailbox.logout()
-
-    # Update the index
-    session["search-index"] = index
-
-    can_next = not (abs(-1 - 5 * (index + 1)) > len(uid))
-    can_prev = -1 - 5 * (index - 1) <= -1
-
-    return jsonify({"htmlText": html_text, "canNext": can_next, "canPrev": can_prev})
     
 
 @app.route("/logout/")

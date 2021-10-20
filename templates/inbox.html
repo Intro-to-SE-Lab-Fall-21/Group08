@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+{% block head %}
+<script src="{{ url_for('static', filename='js/inbox.js') }}"></script>
+{% endblock %}
 {% block title %}Login Page{% endblock %}
 {% block content %}
 <!-- TODO: Add nice layout for the inbox page -->
@@ -6,46 +9,18 @@
 {% if error %}
 <p><strong>Error: </strong>{{ error }}</p>
 {% endif %}
-<form action="#" method="post">
-  <!-- Even though the input check for "valid email address",
-    the email address needs to be validated on the server side -->
-  <a href="/compose">Compose an email </a>
-  <p><a href="{{ url_for('search') }}">Search</a></p>
-  <p><a href="/logout">Logout</a></p>
+<p><a href="/compose">Compose an email</a></p>
+<p><a href="/logout">Logout</a></p>
+<form>
+  <input type="text" id="searchInput" placeholder="Search mail" />
+  <button>Search</button>
+  <span></span>
 </form>
 
 <!-- Inbox messages -->
-{% for i in range(messages|length) %}
-<article>
-  <h2><a href="{{ url_for('inbox_message', uid=uids[i], inbox_page=number) }}">{{ messages[i].subject }}</a></h2>
-  <p>{{ messages[i].date }}</p>
-  <p>{{ messages[i].from_[0][0] }} - {{ messages[i].from_[0][1] }}</p>
-</article>
-{% endfor %}
-
-<!-- See next or previous messages -->
-<footer>
-  {% if number != 0 %}
-  <a href="{{ url_for('inbox', number=0) }}">Newest</a>
-  <a href="{{ url_for('inbox', number=number-1) }}">Previous</a>
-  {% else %}
-  Latest
-  Previous
-  {% endif %}
-
-  {{ number + 1}}
-
-  {% if uid_number - 5 > 0 %}
-  <a href="{{ url_for('inbox', number=number+1)}}">Next</a>
-  {% else %}
-  Next
-  {% endif %}
-
-  {% if latest_uid_number // 5 - 1 != number %}
-  <a href="{{ url_for('inbox', number=latest_uid_number // 5 - 1) }}">Oldest</a>
-  {% else %}
-  Oldest
-  {% endif %}
-</footer>
+<main>
+</main>
+<p><a href="#" id="loadMoreMessages">Load more messages</a></p>
+<p id="loadAlert"></p>
 
 {% endblock %}
