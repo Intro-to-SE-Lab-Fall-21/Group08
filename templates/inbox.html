@@ -5,15 +5,18 @@
 {% block title %}Login Page{% endblock %}
 {% block content %}
 <!-- TODO: Add nice layout for the inbox page -->
+<head>
+  <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='CSS/inbox.css') }}">
+</head>
 <h1>Inbox</h1>
 {% if error %}
 <p><strong>Error: </strong>{{ error }}</p>
 {% endif %}
-<p><a href="/compose">Compose an email</a></p>
-<p><a href="/logout">Logout</a></p>
+<p><button id="tocompose" onclick="window.location.href='/compose/'">Compose</button></p>
+<p><button id="tologout" onclick="window.location.href='/logout'">Logout</button></p>
 <form>
-  <input type="text" id="searchInput" placeholder="Search mail" />
-  <button>Search</button>
+  <input type="text" placeholder="Search mail" id="search" />
+  <p><button class="button">Search</button></p>
   <span></span>
 </form>
 

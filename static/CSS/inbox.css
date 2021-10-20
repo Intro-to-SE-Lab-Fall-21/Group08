@@ -1,0 +1,43 @@
+h1 {
+  text-align: left;
+  background: #8e0000;
+  font-size: 35px;
+  font-family: Arial;
+  color: white;
+  border-style: solid;
+  border-color: black;
+  padding: 20px;
+}
+
+#tocompose {
+  padding: 5px;
+  margin: 0px 0;
+  border: none;
+  border-radius: 4px;
+  background-color: #8e0000;
+  font-size: px;
+  font-family: Arial;
+  color: white;
+}
+
+#tologout {
+  padding: 5px;
+  margin: 0px 0;
+  border: none;
+  border-radius: 4px;
+  background-color: #8e0000;
+  font-size: px;
+  font-family: Arial;
+  color: white;
+}
+
+.button {
+  padding: 5px;
+  margin: 0px 0;
+  border: none;
+  border-radius: 4px;
+  background-color: #8e0000;
+  font-size: px;
+  font-family: Arial;
+  color: white;
+}

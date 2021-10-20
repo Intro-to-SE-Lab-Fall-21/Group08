@@ -3,22 +3,18 @@
 {% block content %}
 <!-- TODO: TODO: Add nice layout for the composition page -->
 <head>
-  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/composition.css') }}">
+  <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='CSS/composition.css') }}">
 </head>
-
-  <h2> Compose an email </h2>
-
+  <h1>Send a message with Bully Mail!</h1>
 <body>
-<p><a href="/inbox">Go back to inbox</a></p>
+<p><button id="backtoinbox" onclick="window.location.href='/inbox'">Back to inbox</button></p>
 <form action="#" method="post" enctype=multipart/form-data>
   <!-- Using the input and text area to get the user's input via the browser -->
-  <p><input type="text" placeholder="To: " name="receiver" required/></p>
-  <p><input type="text" placeholder="Subject: " name="subject"/></p>
+  <p><input type="text" placeholder="To: " name="receiver" id="receiver" required/></p>
+  <p><input type="text" placeholder="Subject: " name="subject" id="subject"/></p>
 
   <!-- Using the Tiny MCE UI to improve the email composition -->
-  <script
-          src="https://cdn.tiny.cloud/1/vr2x3cxjja3hokctzkzvlvxa1ex2uerrs733r5889trcniq3/tinymce/5/tinymce.min.js" referrerpolicy="origin">
-  </script>
+  <script src="https://cdn.tiny.cloud/1/vr2x3cxjja3hokctzkzvlvxa1ex2uerrs733r5889trcniq3/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
 
   <script>
  tinymce.init({
@@ -27,11 +23,10 @@
 });
 </script>
 
-  <p><textarea name=emailbody rows="40" cols="200"></textarea></p>
-  <p><label for="infile">Attach a file:</label> </p>
-  <input type="file" id="infile" name="infile" multiple=""><br>
-
-  <p><input type="submit" id="Send message" name="Send message"/></p>
+  <p><textarea name=emailbody rows="35" cols="100"></textarea></p>
+  <label for="infile">Attach a file:</label>
+  <input type="file" name="infile" id="infile" multiple="">
+  <p><input type="submit" value="Send" name="Send message" id="send"/></p>
 </form>
 </body>
 {% endblock %}

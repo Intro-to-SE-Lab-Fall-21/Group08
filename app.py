@@ -71,7 +71,7 @@ def inbox():
 @app.route("/process/inbox/fetch", methods=["POST"])
 def process_inbox_fetch():
     messageUids = session["messagesUids"]
-    
+
     # Login using user credientials
     imap = imaplib.IMAP4_SSL("imap.gmail.com")
     user = session["user"]
@@ -85,7 +85,7 @@ def process_inbox_fetch():
         data.reverse()
         messageUids = data
         session["receivedUids"] = messageUids[:]
-    
+
     index = 0
     html_text = """"""
     while index < 5 and messageUids:
@@ -134,10 +134,10 @@ def process_inbox_search():
         _, data = imap.search(None, "SUBJECT \"%s\"" % search_query)
     else:
         _, data = imap.search(None, "ALL")
-    
+
     imap.close()
     imap.logout()
-    
+
     # Decode into strings and setup from newest to oldest messages
     data = data[0].decode().split()
     data.reverse()
@@ -167,7 +167,7 @@ def fetch_subject(username, password, host, uid):
     inbox = imaplib.IMAP4_SSL(host)
     inbox.login(username, password)
     inbox.select("INBOX")
-    
+
     # Fetch the raw mail data using the uid
     _, raw_data = inbox.fetch(str(uid), '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
     inbox.close()
@@ -183,7 +183,7 @@ def fetch_mail(username, password, host, uid):
     inbox = imaplib.IMAP4_SSL(host)
     inbox.login(username, password)
     inbox.select("INBOX")
-    
+
     # Fetch the raw mail data using the uid
     _, raw_data = inbox.fetch(str(uid), '(RFC822)')
 
@@ -194,7 +194,7 @@ def fetch_mail(username, password, host, uid):
     if raw_data[0]:
         msg = parse_from_bytes(raw_data[0][1])
         return msg
-    
+
     # Returns None if the message does not exist
     return None
 
@@ -310,7 +310,8 @@ def sendmessage(receiver, sender, password, bodytext, subject, files, attachment
                 encoders.encode_base64(emailattachment)
 
                 # Add the file's name as the attachment's header and attach the files to the draft
-                emailattachment.add_header('Content-Disposition', "attachment; filename= %s" % secure_filename(files[i].filename))
+                emailattachment.add_header('Content-Disposition',
+                                           "attachment; filename= %s" % secure_filename(files[i].filename))
                 email.attach(emailattachment)
 
                 # Close the file when finished
@@ -331,7 +332,7 @@ def sendmessage(receiver, sender, password, bodytext, subject, files, attachment
 
     # Return true on success
     return True
-    
+
 
 @app.route("/logout/")
 def logout():
