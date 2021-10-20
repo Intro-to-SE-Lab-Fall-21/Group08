@@ -9,12 +9,13 @@
 {% if error %}
 <p><strong>Error: </strong>{{ error }}</p>
 {% endif %}
-<form action="#" method="post">
-  <!-- Even though the input check for "valid email address",
-    the email address needs to be validated on the server side -->
-  <a href="/compose">Compose an email </a>
-  <p><a href="{{ url_for('search') }}">Search</a></p>
-  <p><a href="/logout">Logout</a></p>
+<p><a href="/compose">Compose an email</a></p>
+<p><a href="{{ url_for('search') }}">Search</a></p>
+<p><a href="/logout">Logout</a></p>
+<form>
+  <input type="text" id="searchInput" placeholder="Search mail" />
+  <button>Search</button>
+  <span></span>
 </form>
 
 <!-- Inbox messages -->

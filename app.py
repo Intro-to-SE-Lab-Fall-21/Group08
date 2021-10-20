@@ -115,6 +115,35 @@ def process_inbox_fetch():
 
     return jsonify({"messagesDisplayed": 0, "text": html_text, "empty": len(messageUids) == 0})
 
+@app.route("/process/inbox/search", methods=["POST"])
+def process_inbox_search():
+    search_query = request.form["search"]
+
+    # Login using user credientials
+    imap = imaplib.IMAP4_SSL("imap.gmail.com")
+    user = session["user"]
+    imap.login(user[0], user[1])
+    imap.select()
+
+    # Strip search query any whitespaces beginning before and ending after content
+    search_query = search_query.strip()
+
+    if search_query:
+        print("Searching", search_query)
+        _, data = imap.search(None, "SUBJECT \"%s\"" % search_query)
+    else:
+        _, data = imap.search(None, "ALL")
+    
+    imap.close()
+    imap.logout()
+    
+    # Decode into strings and setup from newest to oldest messages
+    data = data[0].decode().split()
+    data.reverse()
+
+    session["messagesUids"] = data
+
+    return jsonify({"empty": len(data) == 0})
 
 @app.route("/inbox/<int:uid>/")
 def inbox_message(uid):
