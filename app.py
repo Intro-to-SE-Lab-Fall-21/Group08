@@ -91,7 +91,7 @@ def process_inbox_fetch():
     while index < 5 and messageUids:
         index += 1
         uid = messageUids.pop(0)
-        _, raw_data = imap.fetch(uid, "(BODY[HEADER.FIELDS (SUBJECT DATE FROM)])")
+        _, raw_data = imap.fetch(uid, "(BODY.PEEK[HEADER.FIELDS (SUBJECT DATE FROM)])")
         msg = parse_from_bytes(raw_data[0][1])
 
         msg_subject = msg.subject
