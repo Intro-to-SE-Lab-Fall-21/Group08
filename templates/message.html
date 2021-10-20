@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ subject }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('inbox', number=inbox_page) }}">Go Back</a></p>
+<h1>{{ subject }}</h1>
+<p>From: {{ from_ }}</p>
+<p>To: {{ to }}</p>
+<p>Date: {{ date }}</p>
+<p>{{ text }}</p>
+{% endblock %}
