@@ -266,6 +266,47 @@ def composition():
     return render_template("composition.html")
 
 
+@app.route("/forward/<int:uid>", methods=["POST", "GET"])
+#consider uid as an argument in forward
+def forward(uid):
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    msg = fetch_mail(session["user"][0], session["user"][1], "imap.gmail.com", uid)
+
+    if request.method == "POST":
+        receiver = request.form["receiver"]
+        subject = request.form["subject"]
+        bodytext = request.form["emailbody"]
+        files = request.files.getlist("infile")
+
+        # Join the current working directory with saved files and create that folder
+        attachmentdir = os.path.join(os.getcwd(), "savedfiles")
+        os.makedirs(attachmentdir, exist_ok=True)
+
+        # Check if the user uloaded a file, if not, set files to none
+        if files[0].filename == "":
+            files = None
+        else:
+
+            # Iterate over the list of files adding each one to the new directory
+            for i in range(len(files)):
+                # This code does not send the file if the filename is nor secure.
+                files[i].save(os.path.join(attachmentdir, secure_filename(files[i].filename)))
+
+        # Call function to send the message
+        sendmessage(receiver, session["user"][0], session["user"][1], bodytext, subject, files, attachmentdir)
+        return redirect(url_for("inbox_message", uid=uid))
+
+    msg_text = ""
+    if msg.text_html:
+        msg_text = msg.text_html[0]
+    elif msg.text_plain:
+        msg_text = msg.text_plain[0]
+
+    return render_template("forward.html", text=msg_text, uid=uid, subject=msg.subject)
+
+
 def sendmessage(receiver, sender, password, bodytext, subject, files, attachmentdir):
     # Attempt to establish a secure connection with the SMTP server
     try:

@@ -5,6 +5,7 @@
 {% block title %}{{ subject }}{% endblock %}
 {% block content %}
 <p><a href="{{ url_for('inbox') }}">Go Back</a></p>
+<p><a href="{{ url_for('forward', uid=uid) }}">Forward</a></p>
 <p id="infoAlert">Loading message...</p>
 <main>
   <h1 id="subject" uid="{{ uid }}"></h1>
