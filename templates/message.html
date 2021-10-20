@@ -1,10 +1,16 @@
 {% extends "base.html" %}
+{% block head %}
+<script src="{{ url_for('static', filename='js/message.js' )}}"></script>
+{% endblock %}
 {% block title %}{{ subject }}{% endblock %}
 {% block content %}
 <p><a href="{{ url_for('inbox') }}">Go Back</a></p>
-<h1>{{ subject }}</h1>
-<p>From: {{ from_ }}</p>
-<p>To: {{ to }}</p>
-<p>Date: {{ date }}</p>
-<p>{{ text }}</p>
+<p id="infoAlert">Loading message...</p>
+<main>
+  <h1 id="subject" uid="{{ uid }}"></h1>
+  <p id="from">From: </p>
+  <p id="to">To: </p>
+  <p id="body"></p>
+  <p id="date">Date: </p>
+</main>
 {% endblock %}

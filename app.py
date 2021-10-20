@@ -84,6 +84,7 @@ def process_inbox_fetch():
         data = data[0].decode().split()
         data.reverse()
         messageUids = data
+        session["receivedUids"] = messageUids[:]
     
     index = 0
     html_text = """"""
@@ -130,7 +131,6 @@ def process_inbox_search():
     search_query = search_query.strip()
 
     if search_query:
-        print("Searching", search_query)
         _, data = imap.search(None, "SUBJECT \"%s\"" % search_query)
     else:
         _, data = imap.search(None, "ALL")
@@ -143,6 +143,7 @@ def process_inbox_search():
     data.reverse()
 
     session["messagesUids"] = data
+    session["receivedUids"] = data[:]
 
     return jsonify({"empty": len(data) == 0})
 
@@ -155,38 +156,27 @@ def inbox_message(uid):
     if int(uid) <= 0:
         return redirect(url_for("inbox"))
 
-    user = session["user"]
-    msg = fetch_mail(user[0], user[1], "imap.gmail.com", uid)
-
-    if msg:
-        msg_subject = msg.subject
-        msg_from = msg.from_[0]
-        msg_to = msg.to[0]
-        msg_date = msg.date
-        msg_text = msg.text_plain
-
-        if msg_from[0]:
-            msg_from = msg_from[0]
-        else:
-            msg_from = msg_from[1]
-        if msg_to[0]:
-            msg_to = msg_to[0]
-        else:
-            msg_to = msg_to[1]
-
-        if len(msg_text) == 0:
-            msg_text = ""
-        else:
-            msg_text = msg_text[0]
-
-        return render_template("message.html", 
-            subject=msg_subject, 
-            from_=msg_from, 
-            to=msg_to, 
-            date=msg_date, 
-            text=msg_text
-            )
+    if str(uid) in session["receivedUids"]:
+        user = session["user"]
+        subject = fetch_subject(user[0], user[1], "imap.gmail.com", uid)
+        return render_template("message.html", uid=uid, subject=subject)
     return redirect(url_for("inbox"))
+
+
+def fetch_subject(username, password, host, uid):
+    inbox = imaplib.IMAP4_SSL(host)
+    inbox.login(username, password)
+    inbox.select("INBOX")
+    
+    # Fetch the raw mail data using the uid
+    _, raw_data = inbox.fetch(str(uid), '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
+    inbox.close()
+    inbox.logout()
+
+    subject = raw_data[0][1].decode()
+    subject = subject.replace("\r\n", "").lstrip("Subject: ")
+
+    return subject
 
 
 def fetch_mail(username, password, host, uid):
@@ -197,6 +187,9 @@ def fetch_mail(username, password, host, uid):
     # Fetch the raw mail data using the uid
     _, raw_data = inbox.fetch(str(uid), '(RFC822)')
 
+    inbox.close()
+    inbox.logout()
+
     # Convert raw data into usable message and return message itself
     if raw_data[0]:
         msg = parse_from_bytes(raw_data[0][1])
@@ -204,7 +197,39 @@ def fetch_mail(username, password, host, uid):
     
     # Returns None if the message does not exist
     return None
-    
+
+
+def get_message_users(users):
+    temp = []
+    for user in users:
+        if user[0]:
+            temp.append("{} <{}>".format(user[0], user[1]))
+        else:
+            temp.append(user[1])
+    return ", ".join(temp)
+
+
+@app.route("/process/inbox/message", methods=["POST"])
+def process_inbox_message():
+    uid = request.form["uid"]
+    user = session["user"]
+
+    msg = fetch_mail(user[0], user[1], "imap.gmail.com", uid)
+
+    msg_to = get_message_users(msg.to)
+    msg_from = get_message_users(msg.from_)
+
+    plain_text = msg.text_plain
+    html_text = msg.text_html
+    text = ''
+
+    if html_text:
+        text = html_text[0]
+    elif plain_text:
+        text = plain_text[0]
+
+    return jsonify({"subject": msg.subject, "from": msg_from, "to": msg_to, "date": msg.date, "text": text})
+
 
 @app.route("/compose/", methods=["POST", "GET"])
 def composition():
