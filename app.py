@@ -115,6 +115,7 @@ def process_inbox_fetch():
 
     return jsonify({"messagesDisplayed": 0, "text": html_text, "empty": len(messageUids) == 0})
 
+
 @app.route("/process/inbox/search", methods=["POST"])
 def process_inbox_search():
     search_query = request.form["search"]
@@ -144,6 +145,7 @@ def process_inbox_search():
     session["messagesUids"] = data
 
     return jsonify({"empty": len(data) == 0})
+
 
 @app.route("/inbox/<int:uid>/")
 def inbox_message(uid):
@@ -304,106 +306,6 @@ def sendmessage(receiver, sender, password, bodytext, subject, files, attachment
 
     # Return true on success
     return True
-
-
-@app.route("/inbox/search/")
-def search():
-    return render_template('search.html')
-
-
-@app.route("/inbox/search/process", methods=["POST"])
-def search_process():
-    user_query = request.form["query"]
-    
-    if user_query:
-
-        # Open connection with IMAP server using the user login info
-        mailbox = imaplib.IMAP4_SSL("imap.gmail.com")
-        mailbox.login(session["user"][0], session["user"][1])
-        mailbox.select()
-
-        # Search on IMAP server with user query
-        _, data = mailbox.search(None, 'SUBJECT \"' + user_query + '\"')
-        data = data[0].split()
-
-        # Returns "No messages found" if the query returns no messages
-        if len(data) == 0:
-            return jsonify({"htmlText": "<p>No messages found</p>"})
-
-        # Store session info about search
-        session["search-index"] = 0
-        session["search-uid"] = data
-
-        # HTML text
-        html_text = """"""
-
-        # Adds to html text with five messages
-        for i in range(-1, max(-6, -len(data) - 1), -1):
-            uid = data[i].decode()
-            _, raw_data = mailbox.fetch(uid, "(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])")
-            msg = parse_from_bytes(raw_data[0][1])
-
-            link = url_for("inbox_message", uid=uid, inbox_page=0)
-
-            from_ = msg.from_[0][0] if msg.from_[0][0] else msg.from_[0][1]
-            
-            html_text += """<article>
-            <h2><a href="{}">{}</a></h2>
-            <p>{}</p>
-            <p>{}</p>
-            </article>""".format(link, msg.subject, msg.date, from_)
-
-        # Close the connection
-        mailbox.close()
-        mailbox.logout()
-        
-        return jsonify({"htmlText": html_text})
-
-    return jsonify({"error": "Missing data!"})
-
-@app.route("/inbox/search/next", methods=["POST"])
-def search_next():
-    if "search-index" not in session:
-        return jsonify({"error": "Cannot go next search!"})
-    
-    increment = int(request.form["value"])
-    index = session["search-index"] + increment
-    uids = session["search-uid"]
-
-    # Open connection with IMAP server using the user login info
-    mailbox = imaplib.IMAP4_SSL("imap.gmail.com")
-    mailbox.login(session["user"][0], session["user"][1])
-    mailbox.select()
-
-    html_text = """"""
-
-    # Adds to html text with next five messages
-    for i in range(-1 - (5 * index), max(-6 - (5 * index), -len(uids) - 1), -1):
-        uid = uids[i].decode()
-        _, raw_data = mailbox.fetch(uid, "(BODY[HEADER.FIELDS (SUBJECT FROM DATE)])")
-        msg = parse_from_bytes(raw_data[0][1])
-
-        link = url_for("inbox_message", uid=uid, inbox_page=0)
-
-        from_ = msg.from_[0][0] if msg.from_[0][0] else msg.from_[0][1]
-        
-        html_text += """<article>
-        <h2><a href="{}">{}</a></h2>
-        <p>{}</p>
-        <p>{}</p>
-        </article>""".format(link, msg.subject, msg.date, from_)
-
-    # Close the connection
-    mailbox.close()
-    mailbox.logout()
-
-    # Update the index
-    session["search-index"] = index
-
-    can_next = not (abs(-1 - 5 * (index + 1)) > len(uid))
-    can_prev = -1 - 5 * (index - 1) <= -1
-
-    return jsonify({"htmlText": html_text, "canNext": can_next, "canPrev": can_prev})
     
 
 @app.route("/logout/")
