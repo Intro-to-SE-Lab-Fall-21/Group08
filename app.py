@@ -1,11 +1,15 @@
 import imaplib
 import smtplib
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
+from email import encoders
+from werkzeug.utils import secure_filename
 
 from flask import Flask, request, redirect, render_template, url_for, jsonify, session
 from email_validator import EmailNotValidError, validate_email
 from mailparser import parse_from_bytes
+import os
 
 app = Flask(__name__)
 app.secret_key = "REPLACE THIS SECRET KEY"
@@ -159,21 +163,40 @@ def fetch_mail(username, password, host, uid):
 
 @app.route("/compose/", methods=["POST", "GET"])
 def composition():
+    # If the user is not in the session, return them to the login
     if "user" not in session:
         return redirect(url_for("home"))
 
+    # Retrieve all the data from the form
     if request.method == "POST":
         receiver = request.form["receiver"]
         subject = request.form["subject"]
         bodytext = request.form["emailbody"]
+        files = request.files.getlist("infile")
 
-        sendmessage(receiver, session["user"][0], session["user"][1], bodytext, subject)
+        # Join the current working directory with saved files and create that folder
+        attachmentdir = os.path.join(os.getcwd(), "savedfiles")
+        os.makedirs(attachmentdir, exist_ok=True)
+
+        # Check if the user uloaded a file, if not, set files to none
+        if files[0].filename == "":
+            files = None
+        else:
+
+            # Iterate over the list of files adding each one to the new directory
+            for i in range(len(files)):
+                # This code does not send the file if the filename is nor secure.
+                files[i].save(os.path.join(attachmentdir, secure_filename(files[i].filename)))
+
+        # Call function to send the message
+        sendmessage(receiver, session["user"][0], session["user"][1], bodytext, subject, files, attachmentdir)
+
         return redirect(url_for("inbox"))
 
     return render_template("composition.html")
 
 
-def sendmessage(receiver, sender, password, bodytext, subject):
+def sendmessage(receiver, sender, password, bodytext, subject, files, attachmentdir):
     # Attempt to establish a secure connection with the SMTP server
     try:
         securecon = smtplib.SMTP('smtp.gmail.com', 587)
@@ -198,13 +221,44 @@ def sendmessage(receiver, sender, password, bodytext, subject):
     email['Subject'] = subject
 
     # Attach the body of the email to the message
-    email.attach(MIMEText(bodytext, 'plain'))
+    email.attach(MIMEText(bodytext, 'html'))
 
+    # If there are no files, there is no point in trying to attach them.
+    if files != None:
+        for i in range(len(files)):
+
+            # Try to add the requested files to the email
+            try:
+                # Retrieve the path for the uploaded file
+                outfile = open(os.path.join(attachmentdir, secure_filename(files[i].filename)), 'rb')
+
+                # Create the content type
+                emailattachment = MIMEBase('application', 'octate-stream')
+                # Set the payload to the file's contents
+                emailattachment.set_payload((outfile).read())
+                # Encode the attachment in base64
+                encoders.encode_base64(emailattachment)
+
+                # Add the file's name as the attachment's header and attach the files to the draft
+                emailattachment.add_header('Content-Disposition', "attachment; filename= %s" % secure_filename(files[i].filename))
+                email.attach(emailattachment)
+
+                # Close the file when finished
+                outfile.close()
+            except Exception as e:
+                print(str(e))
+    # Convert the email to a string
     emailbody = email.as_string()
 
     # Send the email and end the SMTP connection
     securecon.sendmail(sender, receiver, emailbody)
     securecon.quit()
+
+    # Iterate over the temporary file and delete its' contents
+    for file in os.listdir(attachmentdir):
+        oldfile = os.path.join(attachmentdir, file)
+        os.remove(oldfile)
+
     # Return true on success
     return True
 
