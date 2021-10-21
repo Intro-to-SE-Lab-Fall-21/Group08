@@ -7,7 +7,7 @@ $(document).ready(function() {
     let currentInboxState = inboxStateEnum.idle;
 
     // Inital calls
-    $("#searchInput").val("")
+    $("#search").val("")
     fetchMessage();
 
     function fetchMessage() {
@@ -38,7 +38,7 @@ $(document).ready(function() {
         currentInboxState = inboxStateEnum.search;
 
         // Gets value from the search bar
-        const searchQuery = $("#searchInput").val();
+        const searchQuery = $("#search").val();
 
         $.ajax({
             data: {
