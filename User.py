@@ -1,64 +1,58 @@
-from flask import request, url_for, session
+import imaplib
+
+from flask import url_for
 from email_validator import EmailNotValidError, validate_email
 from mailparser import parse_from_bytes
-import imaplib
 
 
 class User:
 
     def __init__(self, user, password):
-        self.user = ""
-        self.password = ""
+        self.user = user
+        self.password = password
 
-    def validate(self, email, password):
+    def validate(self):
 
         error = None
         try:
             # Validate given email address is a valid email address.
             # Throws error if the email address is not valid.
-            validate_email(email)
+            validate_email(self.user)
 
             # Open a connection with gmail.com and validate
             # user's email address and password
             inbox = imaplib.IMAP4_SSL("imap.gmail.com")
-            inbox.login(email, password)
-            inbox.logout()
-
-            # Store user's email and password after successful authenication
-            session["user"] = [email, password]
+            inbox.login(self.user, self.password)
 
         except EmailNotValidError as e:
             error = str(e)
         except imaplib.IMAP4.error as e:
             error = "Failed to authenticate with gmail.com"
-
+        finally:
             # Close connection after failing to authenticate with gmail.com
             inbox.logout()
 
         return error
 
-    def inboxfetch(self, user):
-
-        messageUids = session["messagesUids"]
-
+    def fetch_inbox(self, message_uids):
         # Login using user credientials
-        imap = imaplib.IMAP4_SSL("imap.gmail.com")
-        imap.login(user[0], user[1])
+        imap = open_mailbox("imap.gmail.com", self.user, self.password)
         imap.select()
 
         # Fetch all Uids from the server if the messageUids is empty
-        if messageUids is None:
+        received_uids = None
+        if message_uids is None:
             _, data = imap.search(None, "ALL")
             data = data[0].decode().split()
             data.reverse()
-            messageUids = data
-            session["receivedUids"] = messageUids[:]
+            message_uids = data
+            received_uids = message_uids[:]
 
         index = 0
         html_text = """"""
-        while index < 5 and messageUids:
+        while index < 5 and message_uids:
             index += 1
-            uid = messageUids.pop(0)
+            uid = message_uids.pop(0)
             _, raw_data = imap.fetch(uid, "(BODY.PEEK[HEADER.FIELDS (SUBJECT DATE FROM)])")
             msg = parse_from_bytes(raw_data[0][1])
 
@@ -80,17 +74,11 @@ class User:
         imap.close()
         imap.logout()
 
-        session["messagesUids"] = messageUids
+        return html_text, message_uids, received_uids
 
-        return html_text, messageUids
-
-    def inboxsearch(self):
-        search_query = request.form["search"]
-
+    def search_inbox(self, search_query):
         # Login using user credientials
-        imap = imaplib.IMAP4_SSL("imap.gmail.com")
-        user = session["user"]
-        imap.login(user[0], user[1])
+        imap = open_mailbox("imap.gmail.com", self.user, self.password)
         imap.select()
 
         # Strip search query any whitespaces beginning before and ending after content
@@ -108,22 +96,13 @@ class User:
         data = data[0].decode().split()
         data.reverse()
 
-        session["messagesUids"] = data
-        session["receivedUids"] = data[:]
-
         return data
 
-    def processmessage(self):
-        user = session["user"]
-        userObj = User(user[0], user[1])
+    def process_message(self, uid):
+        msg = self.fetch_mail("imap.gmail.com", uid)
 
-        uid = request.form["uid"]
-        user = session["user"]
-
-        msg = userObj.fetch_mail(user[0], user[1], "imap.gmail.com", uid)
-
-        msg_to = userObj.get_message_users(msg.to)
-        msg_from = userObj.get_message_users(msg.from_)
+        msg_to = self._get_message_users(msg.to)
+        msg_from = self._get_message_users(msg.from_)
 
         plain_text = msg.text_plain
         html_text = msg.text_html
@@ -137,10 +116,9 @@ class User:
         return msg.subject, msg_from, msg_to, msg.date, text
 
     # Henry's functions #
-    def fetch_subject(self, username, password, host, uid):
-        inbox = imaplib.IMAP4_SSL(host)
-        inbox.login(username, password)
-        inbox.select("INBOX")
+    def fetch_subject(self, host, uid):
+        inbox = open_mailbox(host, self.user, self.password)
+        inbox.select()
 
         # Fetch the raw mail data using the uid
         _, raw_data = inbox.fetch(str(uid), '(BODY.PEEK[HEADER.FIELDS (SUBJECT)])')
@@ -152,10 +130,9 @@ class User:
 
         return subject
 
-    def fetch_mail(self, username, password, host, uid):
-        inbox = imaplib.IMAP4_SSL(host)
-        inbox.login(username, password)
-        inbox.select("INBOX")
+    def fetch_mail(self, host, uid):
+        inbox = open_mailbox(host, self.user, self.password)
+        inbox.select()
 
         # Fetch the raw mail data using the uid
         _, raw_data = inbox.fetch(str(uid), '(RFC822)')
@@ -171,7 +148,7 @@ class User:
         # Returns None if the message does not exist
         return None
 
-    def get_message_users(self, users):
+    def _get_message_users(self, users):
         temp = []
         for user in users:
             if user[0]:
@@ -180,4 +157,11 @@ class User:
                 temp.append(user[1])
         return ", ".join(temp)
 
-    # Henry's functions
+
+def open_mailbox(host, username, password):
+    try:
+        mailbox = imaplib.IMAP4_SSL(host)
+        mailbox.login(username, password)
+    except imaplib.IMAP4.error:
+        return None
+    return mailbox
