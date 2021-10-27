@@ -3,7 +3,6 @@ from werkzeug.utils import secure_filename
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email import encoders
-from User import *
 import smtplib
 import os
 
@@ -16,7 +15,7 @@ class BullyMail:
         self.bodytext = bodytext
         self.files = files
 
-    def sendmessage(self, receiver, sender, password, bodytext, subject, files, attachmentdir):
+    def send_message(self, receiver, sender, password, bodytext, subject, files, attachmentdir):
         # Attempt to establish a secure connection with the SMTP server
         try:
             securecon = smtplib.SMTP('smtp.gmail.com', 587)
@@ -83,7 +82,7 @@ class BullyMail:
         # Return true on success
         return True
 
-    def compose(self):
+    def compose(self, user, password):
         # Join the current working directory with saved files and create that folder
         attachmentdir = os.path.join(os.getcwd(), "savedfiles")
         os.makedirs(attachmentdir, exist_ok=True)
@@ -99,6 +98,6 @@ class BullyMail:
                 self.files[i].save(os.path.join(attachmentdir, secure_filename(self.files[i].filename)))
 
         # Call function to send the message
-        self.sendmessage(self.receiver, session["user"][0], session["user"][1], self.bodytext, self.subject, self.files,
+        self.send_message(self.receiver, user, password, self.bodytext, self.subject, self.files,
                          attachmentdir)
 
