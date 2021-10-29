@@ -17,7 +17,31 @@ Design and develop an email client that will have a number of different function
     * If downloaded, unzip the repository
 2. Create Python virtual environment at top-level of the repository (see [how to do](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment))
 3. Activate virtual environment (see [how to do](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/#activating-a-virtual-environment))
-4. Install required modules by running `pip install -r requirements.txt`
+4. Install required modules by running `pip install -e .`
+
+
+## Running
+On Bash
+```
+$ export FLASK_APP=flaskr
+$ export FLASK_ENV=development
+$ flask run
+```
+On Windows cmd
+```
+> set FLASK_APP=flaskr
+> set FLASK_ENV=development
+> flask run
+```
+On Powershell
+```
+> $env:FLASK_APP = "flaskr"
+> $env:FLASK_ENV = "development"
+> flask run
+```
+
+## Testing
+
 
 ## Team Members
 - Matthew Hawes ([mwh273](https://github.com/mwh273))
