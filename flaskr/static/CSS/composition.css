@@ -1,0 +1,90 @@
+h1 {
+  text-align: center;
+  background: white;
+  font-size: 25px;
+  font-family: Arial;
+  color: #8e0000;
+  border-style: solid;
+  border-color: #8e0000;
+  padding: 30px;
+}
+
+body {
+font-family: Arial;
+}
+
+#backtoinbox {
+  padding: 5px;
+  margin: 4px 0;
+  border: none;
+  border-radius: 4px;
+  width: 5%;
+  background-color: #8e0000;
+  font-size: px;
+  font-family: Arial;
+  color: white;
+}
+
+#backtoinbox:hover {
+  background-color: #7e0000;
+  color: #f4f4f4;
+}
+
+#receiver {
+  background-color: white;
+  width: 10%;
+  padding: 5px;
+  margin: 4px 0;
+  border: 1px solid #8e0000;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-family: Arial;
+}
+
+#subject {
+  background-color: white;
+  width: 10%;
+  padding: 5px;
+  margin: 4px 0;
+  border: 1px solid #8e0000;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-family: Arial;
+}
+
+label {
+font-size: 25px;
+}
+
+#infile::file-selector-button {
+  padding: 5px;
+  margin: 4px 0;
+  border: none;
+  border-radius: 4px;
+  background-color: #8e0000;
+  font-size: px;
+  font-family: Arial;
+  color: white;
+}
+
+#infile::file-selector-button:hover {
+  background-color: #7e0000;
+  color: #f4f4f4;
+}
+
+#send {
+  padding: 10px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 4px;
+  width: 20%;
+  background-color: #8e0000;
+  font-size: px;
+  font-family: Arial;
+  color: white;
+}
+
+#send:hover {
+  background-color: #7e0000;
+  color: #f4f4f4;
+}
