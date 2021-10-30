@@ -20,5 +20,11 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2.2.2
       
-      - name: pytest
-        run: pip install -r requirements.txt && pytest
+      - name: Setup Flask
+        run: pip install -e .
+      
+      - name: Setup pytest
+        run: pip install pytest
+      
+      - name: Test using pytest
+        run: pytest
