@@ -1,0 +1,39 @@
+.toolbar {
+    font-family: Arial;
+    font-size: 20px;
+    position: fixed;
+    padding: 0px;
+    margin: 0px;
+    top: 0;
+    left: 0;
+    right: 0;
+    border-bottom-style: solid;
+    border-padding: 5px;
+}
+
+
+.toolbar {
+  background-color: #8e0000;
+  overflow: hidden;
+}
+
+/* Style the links inside the navigation bar */
+.toolbar a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 20px 22px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+/* Change the color of links on hover */
+.toolbar a:hover {
+  background-color: #170502;
+}
+
+/* Add a color to the active/current link */
+.toolbar a.active {
+  background-color: black;
+  color: white;
+}
