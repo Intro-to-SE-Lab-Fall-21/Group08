@@ -1,8 +1,16 @@
 h1 {
+  font-family: Arial;
+  position: fixed;
+  padding: 0px;
+  margin: 0px;
+  top: 20px;
+  left: 0;
+  right: 0;
+  border-bottom-style: solid;
+  border-padding: 5px;
   text-align: center;
   background: white;
   font-size: 25px;
-  font-family: Arial;
   color: #8e0000;
   border-style: solid;
   border-color: #8e0000;
@@ -15,16 +23,18 @@ body {
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
+    font-family: arial;
 }
 
 .login {
+    margin: 0 auto;
     height: 400px;
     width: 400px;
-    margin: 200px auto 0;
+    margin: 300px auto 0;
     border-style: solid;
     border-color: #8e0000;
     text-align: center;
-    font-family: Arial;
+    font-family: arial;
     background: white;
 }
 
@@ -36,7 +46,7 @@ body {
   border: 1px solid #8e0000;
   border-radius: 4px;
   box-sizing: border-box;
-  font-family: Arial;
+  font-family: arial;
 }
 
 #password {
@@ -47,7 +57,7 @@ body {
   border: 1px solid #8e0000;
   border-radius: 4px;
   box-sizing: border-box;
-  font-family: Arial;
+  font-family: arial;
 }
 
 #submit {
@@ -58,7 +68,7 @@ padding: 10px;
   width: 90%;
   background-color: #8e0000;
   color: white;
-  font-family: Arial;
+  font-family: arial;
 }
 
 #submit:hover {

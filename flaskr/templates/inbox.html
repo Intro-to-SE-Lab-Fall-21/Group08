@@ -5,25 +5,30 @@
 {% block title %}Inbox Page{% endblock %}
 {% block content %}
 <!-- TODO: Add nice layout for the inbox page -->
-<head>
+<body>
   <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='CSS/inbox.css') }}">
-</head>
-<h1>Inbox</h1>
 {% if error %}
 <p><strong>Error: </strong>{{ error }}</p>
 {% endif %}
-<p><button id="tologout" onclick="window.location.href='/auth/logout'">Logout</button></p>
-<p><button id="tocompose" onclick="window.location.href='/compose/'">Compose</button></p>
-<form>
-  <input type="text" placeholder="Search mail" id="search" />
-  <button class="button">Search</button>
-  <span></span>
-</form>
-
+</body>
 <!-- Inbox messages -->
+<br> <br> <br> <br>
+
+
+<img class="banner" src="https://media.glassdoor.com/l/c9/08/59/eb/newest-completed-education-hall-on-mississippi-state-university-s-campus.jpg">
+
+
+<h3>Welcome to the inbox</h3>
+
 <main>
 </main>
-<p><a href="#" id="loadMoreMessages">Load more messages</a></p>
-<p id="loadAlert"></p>
+<body>
 
+<a href="#" id="loadMoreMessages">Load more messages</a>
+<form>
+ <p><input type="text" placeholder="Search mail" id="search" />
+  <button class="button">Search </button></p>
+</form>
+<p id="loadAlert"></p>
+</body>
 {% endblock %}

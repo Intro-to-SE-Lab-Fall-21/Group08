@@ -1,9 +1,11 @@
+from typing import Optional
+
 from flask import Flask, session, redirect, url_for
 from flaskr.auth import bp as auth_blueprint
 from flaskr.bullymail import bp as bullymail_blueprint
 
 
-def create_app(test_config : dict | None = None) -> Flask:
+def create_app(test_config = None) -> Flask:
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping({
         "SECRET_KEY": "REPLACE THIS SECRET KEY"

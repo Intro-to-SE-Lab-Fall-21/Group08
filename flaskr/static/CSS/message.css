@@ -1,9 +1,24 @@
 #body {
-  text-align: center;
+  text-align: left;
   background: white;
-  border-style: solid;
-  border-color: #8e0000;
-  padding: 30px;
+  padding: 30px 30px;
+  position: relative;
+  border-bottom: 3px solid black;
+  border-left: 3px solid black;
+  font-family: arial;
+}
+
+#date {
+  position: absolute;
+  font-weight: bold;
+  font-family: arial;
+  right: 5%;
+
+}
+
+#subject {
+font-family: arial;
+  border-bottom: 3px solid black;
 }
 
 #backtoinbox {
@@ -15,4 +30,11 @@
   font-size: px;
   font-family: Arial;
   color: white;
+}
+
+body {
+
+  background-color: #e2e2e2;
+  font-family: arial;
+
 }

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block head %}
+<script src="{{ url_for('static', filename='js/drafts.js') }}"></script>
+{% endblock %}
+{% block title %}Drafts page{% endblock %}
+{% block content %}
+<!-- TODO: Add nice layout for the inbox page -->
+
+  <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='CSS/inbox.css') }}">
+
+{% if error %}
+<p><strong>Error: </strong>{{ error }}</p>
+{% endif %}
+
+<!-- Draft messages -->
+<br> <br> <br> <br>
+
+<img class="banner" src="https://www.msstate.edu/sites/www.msstate.edu/files/images/Dogwood_and_Deavenport_residence_halls_20160720_M3B2417-1.jpg">
+
+
+<h3>Welcome to the drafts box</h3>
+
+<main>
+</main>
+<p><a href="#" id="loadMoreMessages">Load more messages</a></p>
+<form>
+  <input type="text" placeholder="Search drafts" id="search" />
+  <button class="button">Search</button>
+  <span></span>
+</form>
+<p id="loadAlert"></p>
+
+{% endblock %}

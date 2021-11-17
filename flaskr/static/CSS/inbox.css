@@ -1,43 +1,77 @@
-h1 {
-  text-align: left;
-  background: #8e0000;
-  font-size: 35px;
+body {
+  background-color: #e2e2e2;
   font-family: Arial;
-  color: white;
+}
+
+article {
+   width: 700px;
+   font-size: 16px;
+   border-top: 2px solid;
+   border-bottom: 1px solid;
+   border-color: #b3ceff;
+}
+
+main {
+   width: 700px;
+   background-color: white;
+   font-family: arial;
+   border-style: solid;
+   font-family: arial;
+   font-weight: bold;
+}
+
+.banner {
+
+  position: absolute;
+  left: 750px;
+  top: 80px;
+  width: 1200px;
+  height: 700px;
+  border: 2px;
   border-style: solid;
-  border-color: black;
+  color: #8e0000;
+
+}
+
+h3 {
+  text-align: center;
+  position: absolute;
+  left: 750px;
+  top: 750px;
+  width: 1130px;
+  background-color: white;
+  border: 2px;
+  border-style: solid;
+  color: #8e0000;
+  font-size: 30px;
   padding: 20px;
+
 }
 
-#tocompose {
+#search {
+  background-color: white;
+  width: 10%;
   padding: 5px;
-  margin: 0px 0;
-  border: none;
+  margin: 4px 0;
+  border: 1px solid #8e0000;
   border-radius: 4px;
-  background-color: #8e0000;
-  font-size: px;
-  font-family: Arial;
-  color: white;
-}
-
-#tologout {
-  padding: 5px;
-  margin: 0px 0;
-  border: none;
-  border-radius: 4px;
-  background-color: #8e0000;
-  font-size: px;
-  font-family: Arial;
-  color: white;
+  font-family: arial;
+  box-sizing: border-box;
 }
 
 .button {
   padding: 5px;
-  margin: 0px 0;
+  margin: 4px 0;
   border: none;
   border-radius: 4px;
+  width: 5%;
   background-color: #8e0000;
   font-size: px;
-  font-family: Arial;
+  font-family: arial;
   color: white;
+}
+
+.button:hover {
+  background-color: #7e0000;
+  color: #f4f4f4;
 }
