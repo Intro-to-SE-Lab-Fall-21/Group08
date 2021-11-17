@@ -2,6 +2,7 @@ import email
 import imaplib
 import ssl
 from email.mime.multipart import MIMEMultipart
+import imaplib
 from werkzeug.utils import secure_filename
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
@@ -340,6 +341,7 @@ def process_draft_message():
         "subject": subject,
         "to": to,
         "text": message_body[4]
+        "attachments" : message_body[5]
     })
 
 
@@ -431,3 +433,18 @@ def forward(uid):
         msg_text = msg.text_plain[0]
 
     return render_template("forward.html", text=msg_text, uid=uid, subject=msg.subject)
+
+@bp.route("/delete/<int:uid>")
+@login_required
+def delete(uid):
+    imap = imaplib.IMAP4_SSL("imap.gmail.com")
+    imap.login(session["user"][0], session["user"][1])
+    imap.select()
+    
+    str_uid = str(uid)
+    imap.store(str_uid, "+FLAGS", "\\Deleted")
+    imap.expunge()
+    imap.close()
+    imap.logout()
+
+    return redirect(url_for(".inbox"))

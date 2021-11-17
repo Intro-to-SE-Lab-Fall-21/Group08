@@ -177,7 +177,7 @@ class User:
             text = html_text[0]
         elif plain_text:
             text = plain_text[0]
-
+        
         attachments = msg.attachments[:]
 
         return msg.subject, msg_from, msg_to, msg.date, text, attachments

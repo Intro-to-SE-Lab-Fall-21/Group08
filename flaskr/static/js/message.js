@@ -18,11 +18,12 @@ $(document).ready(function () {
         $("#body").append(data.text);
         if (data.attachments.length > 0) {
             data.attachments.forEach(element => {
-            $("#attachments ul").append("<li>" + element.filename + "</li>")
-        });
+                $("#attachments ul").append("<li>" + element.filename + "</li>")
+            });
         } else {
             $("#attachments").hide();
         }
+        
         $("main").show();
     });
 });
