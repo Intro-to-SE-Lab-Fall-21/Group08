@@ -16,6 +16,16 @@ $(document).ready(function () {
         $("#to").append(data.to);
         $("#date").append(data.date);
         $("#body").append(data.text);
+
+        if (data.attachments.length > 0) {
+            data.attachments.forEach(element => {
+                $("#attachments ul").append("<li>" + element.filename + "</li>")
+            });
+        } else {
+            $("#attachments").hide();
+        }
+        
+
         $("main").show();
     });
 });
