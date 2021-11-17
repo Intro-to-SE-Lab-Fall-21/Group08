@@ -181,7 +181,8 @@ def process_inbox_message():
         "from": message_body[1], 
         "to": message_body[2], 
         "date": message_body[3],
-        "text": message_body[4]
+        "text": message_body[4],
+        "attachments" : message_body[5]
     })
 
 
