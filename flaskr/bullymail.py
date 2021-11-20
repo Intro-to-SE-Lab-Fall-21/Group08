@@ -11,6 +11,7 @@ from flaskr.auth import login_required
 from email import encoders
 import smtplib
 import time
+import datetime
 import os
 
 
@@ -96,6 +97,7 @@ class BullyMail:
         # Create a message with multiple parts
         email = MIMEMultipart()
 
+        email['Date'] = datetime.datetime.utcnow().strftime('%d %b %Y %H:%M:%S')
         email['FROM'] = sender
         email['To'] = self.receiver
         email['Subject'] = self.subject
