@@ -38,7 +38,6 @@ class User:
         # Login using user credientials
         imap = open_mailbox("imap.gmail.com", self.user, self.password)
         imap.select()
-        print(imap.list())
 
         # Fetch all Uids from the server if the messageUids is empty
         received_uids = None
@@ -102,6 +101,9 @@ class User:
             msg_subject = msg.subject
             msg_date = msg.date
             msg_from = msg.from_[0]
+
+            if msg_subject == "":
+                msg_subject += "(no subject)"
 
             if msg_from[0]:
                 msg_from = msg_from[0]
@@ -177,7 +179,7 @@ class User:
             text = html_text[0]
         elif plain_text:
             text = plain_text[0]
-        
+
         attachments = msg.attachments[:]
 
         return msg.subject, msg_from, msg_to, msg.date, text, attachments
@@ -190,17 +192,14 @@ class User:
         msg_from = self._get_message_users(msg.from_)
         msg_subject = msg.subject
 
-        if msg_to == "":
-            msg_to = "N/A"
-        if msg.subject == "":
-            msg_subject = "N/A"
-        if msg_to and msg.subject == "":
-            msg_to = "N/A"
-            msg_subject = "N/A"
-
         plain_text = msg.text_plain
         html_text = msg.text_html
         text = ''
+
+        parsed_msg = msg_to.split()
+        if len(parsed_msg) > 1:
+            msg_to = parsed_msg[2].replace("<", "")
+            msg_to = msg_to.replace(">", "")
 
         if html_text:
             text = html_text[0]

@@ -1,8 +1,5 @@
-import email
 import imaplib
-import ssl
 from email.mime.multipart import MIMEMultipart
-import imaplib
 from werkzeug.utils import secure_filename
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
@@ -93,21 +90,60 @@ class BullyMail:
         return True
 
     def save_draft(self, sender, password, attachmentdir):
+
         securecon = imaplib.IMAP4_SSL('imap.gmail.com', port=993)
 
-        mail = email.message.Message()
-        mail["From"] = sender
-        mail["To"] = self.receiver
-        mail["Subject"] = self.subject
-        mail.set_payload(self.bodytext)
-        # Fix special characters by setting the same encoding we'll use later to encode the message
-        mail.set_charset(email.charset.Charset("utf-8"))
-        encoded_message = str(mail).encode("utf-8")
+        # Create a message with multiple parts
+        email = MIMEMultipart()
 
-        securecon.login(sender, password)
-        securecon.select('[Gmail]/Drafts')
-        securecon.append("[Gmail]/Drafts", '', imaplib.Time2Internaldate(time.time()), encoded_message)
+        email['FROM'] = sender
+        email['To'] = self.receiver
+        email['Subject'] = self.subject
 
+        # Attach the body of the email to the message
+        email.attach(MIMEText(self.bodytext, 'html'))
+
+        # If there are no files, there is no point in trying to attach them.
+        if self.files is not None:
+            for i in range(len(self.files)):
+
+                # Try to add the requested files to the email
+                try:
+                    # Retrieve the path for the uploaded file
+                    outfile = open(os.path.join(attachmentdir, secure_filename(self.files[i].filename)), 'rb')
+
+                    # Create the content type
+                    emailattachment = MIMEBase('application', 'octate-stream')
+                    # Set the payload to the file's contents
+                    emailattachment.set_payload(outfile.read())
+                    # Encode the attachment in base64
+                    encoders.encode_base64(emailattachment)
+
+                    # Add the file's name as the attachment's header and attach the files to the draft
+                    emailattachment.add_header('Content-Disposition',
+                                               "attachment; filename= %s" % secure_filename(self.files[i].filename))
+                    email.attach(emailattachment)
+
+                    # Close the file when finished
+                    outfile.close()
+                except Exception as e:
+                    print(str(e))
+
+        try:
+            # Convert the email to a string
+            emailbody = email.as_string()
+            emailbody = emailbody.encode("utf-8")
+
+            cur_time = imaplib.Time2Internaldate(time.time())
+
+
+            securecon.login(sender, password)
+            securecon.select('[Gmail]/Drafts')
+            securecon.append("[Gmail]/Drafts", '', cur_time, emailbody)
+
+        except Exception as e:
+            print(str(e))
+            return False
         securecon.close()
 
         # Return true on success
@@ -118,36 +154,40 @@ class BullyMail:
         attachmentdir = os.path.join(os.getcwd(), "savedfiles")
         os.makedirs(attachmentdir, exist_ok=True)
 
-        # Check if the user uloaded a file, if not, set files to none
-        if self.files[0].filename == "":
-            self.files = None
-        else:
+        if self.files is not None and self.files[0] != "":
+            # Check if the user uloaded a file, if not, set files to none
+            if self.files[0].filename == "":
+                self.files = None
+            else:
 
-            # Iterate over the list of files adding each one to the new directory
-            for i in range(len(self.files)):
-                # This code does not send the file if the filename is nor secure.
-                self.files[i].save(os.path.join(attachmentdir, secure_filename(self.files[i].filename)))
+                # Iterate over the list of files adding each one to the new directory
+                for i in range(len(self.files)):
+                    # This code does not send the file if the filename is nor secure.
+                    self.files[i].save(os.path.join(attachmentdir, secure_filename(self.files[i].filename)))
 
         # Call function to send the message
-        self.send_message(user, password, attachmentdir)
+        result = self.send_message(user, password, attachmentdir)
+        return result
 
     def save(self, user, password):
         # Join the current working directory with saved files and create that folder
         attachmentdir = os.path.join(os.getcwd(), "savedfiles")
         os.makedirs(attachmentdir, exist_ok=True)
 
-        # Check if the user uloaded a file, if not, set files to none
-        if self.files[0].filename == "":
-            self.files = None
-        else:
+        if self.files is not None and self.files[0] != "":
+            # Check if the user uloaded a file, if not, set files to none
+            if self.files[0].filename == "":
+                self.files = None
+            else:
 
-            # Iterate over the list of files adding each one to the new directory
-            for i in range(len(self.files)):
-                # This code does not send the file if the filename is nor secure.
-                self.files[i].save(os.path.join(attachmentdir, secure_filename(self.files[i].filename)))
+                # Iterate over the list of files adding each one to the new directory
+                for i in range(len(self.files)):
+                    # This code does not send the file if the filename is nor secure.
+                    self.files[i].save(os.path.join(attachmentdir, secure_filename(self.files[i].filename)))
 
         # Call function to send the message
-        self.save_draft(user, password, attachmentdir)
+        result = self.save_draft(user, password, attachmentdir)
+        return result
 
 
 #########################################
@@ -320,28 +360,10 @@ def process_draft_message():
     subject = message_body[0]
     to = message_body[2]
 
-    if subject == "N/A" and to == "N/A":
-        subject = ""
-        to = ""
-
-    elif subject == "N/A":
-        subject = ""
-
-    elif to == "N/A":
-        to = ""
-
-    if to is not "":
-        parsed_email = to.split()
-        to = parsed_email[2].replace("<", "")
-        to = to.replace(">", "")
-
-    print("Help")
-
     return jsonify({
         "subject": subject,
         "to": to,
         "text": message_body[4]
-        "attachments" : message_body[5]
     })
 
 
@@ -433,18 +455,3 @@ def forward(uid):
         msg_text = msg.text_plain[0]
 
     return render_template("forward.html", text=msg_text, uid=uid, subject=msg.subject)
-
-@bp.route("/delete/<int:uid>")
-@login_required
-def delete(uid):
-    imap = imaplib.IMAP4_SSL("imap.gmail.com")
-    imap.login(session["user"][0], session["user"][1])
-    imap.select()
-    
-    str_uid = str(uid)
-    imap.store(str_uid, "+FLAGS", "\\Deleted")
-    imap.expunge()
-    imap.close()
-    imap.logout()
-
-    return redirect(url_for(".inbox"))
