@@ -13,6 +13,8 @@ class User:
 
     def validate(self):
 
+        inbox = None
+
         error = None
         try:
             # Validate given email address is a valid email address.
@@ -24,13 +26,14 @@ class User:
             inbox = imaplib.IMAP4_SSL("imap.gmail.com")
             inbox.login(self.user, self.password)
 
-        except EmailNotValidError as e:
+        except (Exception, EmailNotValidError) as e:
             error = str(e)
-        except imaplib.IMAP4.error as e:
+        except (Exception, imaplib.IMAP4.error) as e:
             error = "Failed to authenticate with gmail.com"
         finally:
-            # Close connection after failing to authenticate with gmail.com
-            inbox.logout()
+            if inbox is not None:
+                # Close connection after failing to authenticate with gmail.com
+                inbox.logout()
 
         return error
 
